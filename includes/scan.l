@@ -30,8 +30,8 @@
  * https://docs.python.org/2.7/reference/index.html
  */
 #include "stdbool.h"
+#include "includes/ast.h"
 #include "parse.tab.h"
-
 
 /* Code to handle locations */
 /* This is taken from Chapter 8 - flex & bison by John Levine */
@@ -154,8 +154,6 @@ stringQ   [ru]?\'([^\\\']|\\.)*\'
 newline   [\r]?[\n]|[\r]
 comment   #.*
 
-
-/***** Start states for multi-line strings and indentation *****/
 %x LONG_STRING
 %x LONG_STRING2
 
@@ -273,8 +271,15 @@ comment   #.*
 "while"    { return WHILE; }
 "with"     { return WITH; }
 "yield"    { return YIELD; }
-
-{number}   { ++numbers; return NUMBER; }
+{integer}  { 
+			 yylval.intNum = atoi(yytext);
+			 return INTEGER;
+		   }
+{floatnumber} {
+			  yylval.fltNum = atof(yytext);
+			  return FLOAT;
+			}
+{number}   { /* ++numbers; return NUMBER; */ }
 {name}     { ++identifiers; 
 			yylval.str = strdup(yytext);	
 			return NAME; }

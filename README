@@ -2,17 +2,12 @@ Name: Yuzhu Zhang
 
 Clemson Email Address: yuzhuz@clemson.edu
 
-Project no: 3
+Project no: 4
 
-Project due date: 2017.10.14
+Project due date: 2017.11.13
 
-Project description: using bison to calculate the complexity of function and validate the grammer
+Project description: Building an AST
 
-The easiest part of this project: writing the test cases
+The easiest part of this project: implement multiple classes of node 
 
-Problems that I had in completing this project: learn to use bison about the $$ parameter, the way to calculate try-except-finally complexity and to avoid the memory leak.
-
-
-
-
-
+Problems that I had in completing this project: new the appropriate node object in the parse.y file and fix the segmentation fault 11.

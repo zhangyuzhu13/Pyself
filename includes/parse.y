@@ -3,10 +3,15 @@
 	#include <stack>
 	#include <string>
 	#include <iostream>
+	#include "includes/ast.h"
 	int yylex (void);
 	extern char *yytext;
 	void yyerror (const char *);
 
+	
+	PoolOfNodes& pool = PoolOfNodes::getInstance();
+
+	
 	int complexity = 0;
 	int old_complexity = 0;
 	bool isFinally = false;
@@ -26,17 +31,26 @@
 %token DOUBLESLASHEQUAL DOUBLESTAR DOUBLESTAREQUAL ELIF ELSE ENDMARKER EQEQUAL
 %token EQUAL EXCEPT EXEC FINALLY FOR FROM GLOBAL GREATER GREATEREQUAL GRLT
 %token IF IMPORT IN INDENT IS LAMBDA LBRACE LEFTSHIFT LEFTSHIFTEQUAL LESS
-%token LESSEQUAL LPAR LSQB MINEQUAL MINUS NAME NEWLINE NOT NOTEQUAL NUMBER
+%token LESSEQUAL LPAR LSQB MINEQUAL MINUS NAME NEWLINE NOT NOTEQUAL INTEGER FLOAT
 %token OR PASS PERCENT PERCENTEQUAL PLUS PLUSEQUAL PRINT RAISE RBRACE RETURN
 %token RIGHTSHIFT RIGHTSHIFTEQUAL RPAR RSQB SEMI SLASH SLASHEQUAL STAR STAREQUAL
 %token STRING TILDE TRY VBAREQUAL WHILE WITH YIELD
 
 
 %union{
+	Node* node;
 	char *str;
+	int intNum;
+	float fltNum;
+	char oper;
 }
-
+%type<oper> pick_PLUS_MINUS pick_multop pick_unop
 %type<str> NAME
+%type<intNum> INTEGER augassign 
+%type<fltNum> FLOAT
+%type<node> number atom power factor term arith_expr testlist pick_yield_expr_testlist
+star_EQUAL shift_expr and_expr xor_expr expr comparison not_test and_test or_test opt_IF_ELSE test star_COMMA_test expr_stmt parameters star_trailer trailer opt_arglist 
+arglist argument pick_argument pick_yield_expr_testlist_comp opt_yield_test testlist_comp print_stmt opt_test
 %start start
 
 %locations
@@ -65,8 +79,8 @@ decorator // Used in: decorators
 	| AT dotted_name NEWLINE
 	;
 opt_arglist // Used in: decorator, trailer
-	: arglist
-	| %empty
+	: arglist { $$ = $1;}
+	| %empty { $$ = 0; }
 	;
 decorators // Used in: decorators, decorated
 	: decorators decorator
@@ -92,8 +106,8 @@ funcdef // Used in: decorated, compound_stmt
 	}
 	;
 parameters // Used in: funcdef
-	: LPAR varargslist RPAR
-	| LPAR RPAR
+	: LPAR varargslist RPAR { $$ = 0; }
+	| LPAR RPAR { $$ = 0; }
 	;
 varargslist // Used in: parameters, old_lambdef, lambdef
 	: star_fpdef_COMMA pick_STAR_DOUBLESTAR
@@ -133,11 +147,17 @@ star_fpdef_notest // Used in: fplist, star_fpdef_notest
 	;
 stmt // Used in: pick_NEWLINE_stmt, plus_stmt
 	: simple_stmt
+	{
+//		$$ = $1;
+	}
 	| compound_stmt
 	;
 simple_stmt // Used in: stmt, suite
 	: small_stmt star_SEMI_small_stmt SEMI NEWLINE
 	| small_stmt star_SEMI_small_stmt NEWLINE
+	{
+//		$$ = $1;
+	}
 	;
 star_SEMI_small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	: star_SEMI_small_stmt SEMI small_stmt
@@ -145,6 +165,9 @@ star_SEMI_small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	;
 small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	: expr_stmt
+	{
+//		$$ = $1;
+	}
 	| print_stmt
 	| del_stmt
 	| pass_stmt
@@ -156,41 +179,95 @@ small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	;
 expr_stmt // Used in: small_stmt
 	: testlist augassign pick_yield_expr_testlist
+	{
+		Node* tempNode;
+		switch($2){
+			case 1:
+				tempNode = new AddBinaryNode($1, $3);
+				break;
+			case 2:
+				tempNode = new SubBinaryNode($1, $3);
+				break;
+			case 3:
+				tempNode = new MulBinaryNode($1, $3);
+				break;
+			case 4:
+				tempNode = new DivBinaryNode($1, $3);
+				break;
+			case 5:
+				tempNode = new PerBinaryNode($1, $3);
+				break;
+			case 6:
+				tempNode = new DbStarBinaryNode($1, $3);
+				break;
+			case 7:
+				tempNode = new DbSlashBinaryNode($1, $3);
+				break;
+		}
+		$1 = new AsgBinaryNode($1, tempNode);
+		pool.add($1);
+		delete tempNode;
+	}
 	| testlist star_EQUAL
+	{
+		if($2){
+			$$ = new AsgBinaryNode($1, $2);
+			pool.add($$);
+		}
+		else{
+			$$ = $1;
+			if($1){
+				($$)->eval()->print();
+			}
+		}
+	}
 	;
 pick_yield_expr_testlist // Used in: expr_stmt, star_EQUAL
-	: yield_expr
-	| testlist
+	: yield_expr { $$ = 0; }
+	| testlist { $$ = $1; }
 	;
 star_EQUAL // Used in: expr_stmt, star_EQUAL
 	: star_EQUAL EQUAL pick_yield_expr_testlist
-	| %empty
+	{
+		$$ = $3;
+	}
+	| %empty { $$ = 0;}
 	;
 augassign // Used in: expr_stmt
-	: PLUSEQUAL
-	| MINEQUAL
-	| STAREQUAL
-	| SLASHEQUAL
-	| PERCENTEQUAL
-	| AMPEREQUAL
-	| VBAREQUAL
-	| CIRCUMFLEXEQUAL
-	| LEFTSHIFTEQUAL
-	| RIGHTSHIFTEQUAL
-	| DOUBLESTAREQUAL
-	| DOUBLESLASHEQUAL
+	: PLUSEQUAL      { $$ = 1; }
+	| MINEQUAL       { $$ = 2; }
+	| STAREQUAL      { $$ = 3; }
+	| SLASHEQUAL     { $$ = 4; }
+	| PERCENTEQUAL   { $$ = 5; }
+	| AMPEREQUAL     { $$ = 0; }
+	| VBAREQUAL      { $$ = 0; }
+	| CIRCUMFLEXEQUAL { $$ = 0; }
+	| LEFTSHIFTEQUAL  { $$ = 0; }
+	| RIGHTSHIFTEQUAL { $$ = 0; }
+	| DOUBLESTAREQUAL { $$ = 6; }
+	| DOUBLESLASHEQUAL { $$ = 7; }
 	;
 print_stmt // Used in: small_stmt
 	: PRINT opt_test
-	| PRINT RIGHTSHIFT test opt_test_2
+	{
+		$$ = $2;
+		($2)->eval()->print();
+	}
+	| PRINT RIGHTSHIFT test opt_test_2 { $$ = 0; }
 	;
 star_COMMA_test // Used in: star_COMMA_test, opt_test, listmaker, testlist_comp, testlist, pick_for_test
 	: star_COMMA_test COMMA test
-	| %empty
+	{
+		$$ = $3;
+	}
+	| %empty { $$ = 0; }
 	;
 opt_test // Used in: print_stmt
-	: test star_COMMA_test opt_COMMA
-	| %empty
+	: test star_COMMA_test opt_COMMA 
+	{
+		$$ = $1;
+	}
+	| %empty { $$ = 0; }
 	;
 plus_COMMA_test // Used in: plus_COMMA_test, opt_test_2
 	: plus_COMMA_test COMMA test
@@ -399,27 +476,42 @@ old_lambdef // Used in: old_test
 	;
 test // Used in: opt_EQUAL_test, print_stmt, star_COMMA_test, opt_test, plus_COMMA_test, raise_stmt, opt_COMMA_test, opt_test_3, exec_stmt, assert_stmt, if_stmt, star_ELIF, while_stmt, with_item, except_clause, opt_AS_COMMA, opt_IF_ELSE, listmaker, testlist_comp, lambdef, subscript, opt_test_only, sliceop, testlist, dictorsetmaker, star_test_COLON_test, opt_DOUBLESTAR_test, pick_argument, argument, testlist1
 	: or_test opt_IF_ELSE
-	| lambdef
+	{
+		$$ = $1;
+	}
+	| lambdef { $$ = 0; }
 	;
 opt_IF_ELSE // Used in: test
-	: IF or_test ELSE test
-	| %empty
+	: IF or_test ELSE test { $$ = 0; }
+	| %empty { $$ = 0; }
 	;
 or_test // Used in: old_test, test, opt_IF_ELSE, or_test, comp_for
 	: and_test
-	| or_test OR and_test
+	{
+		$$ = $1;
+	}
+	| or_test OR and_test { $$ = 0; }
 	;
 and_test // Used in: or_test, and_test
 	: not_test
-	| and_test AND not_test
+	{
+		$$ = $1;
+	}
+	| and_test AND not_test { $$ = 0; }
 	;
 not_test // Used in: and_test, not_test
-	: NOT not_test
+	: NOT not_test { $$ = 0; }
 	| comparison
+	{
+		$$ = $1;
+	}
 	;
 comparison // Used in: not_test, comparison
 	: expr
-	| comparison comp_op expr
+	{
+		$$ = $1;
+	}
+	| comparison comp_op expr { $$ = 0; }
 	;
 comp_op // Used in: comparison
 	: LESS
@@ -436,19 +528,31 @@ comp_op // Used in: comparison
 	;
 expr // Used in: exec_stmt, with_item, comparison, expr, exprlist, star_COMMA_expr
 	: xor_expr
-	| expr BAR xor_expr
+	{
+		$$ = $1;
+	}
+	| expr BAR xor_expr { $$ = 0; }
 	;
 xor_expr // Used in: expr, xor_expr
 	: and_expr
-	| xor_expr CIRCUMFLEX and_expr
+	{
+		$$ = $1;
+	}
+	| xor_expr CIRCUMFLEX and_expr { $$ = 0; }
 	;
 and_expr // Used in: xor_expr, and_expr
 	: shift_expr
-	| and_expr AMPERSAND shift_expr
+	{
+		$$ = $1;
+	}
+	| and_expr AMPERSAND shift_expr { $$ = 0; }
 	;
 shift_expr // Used in: and_expr, shift_expr
-	: arith_expr
-	| shift_expr pick_LEFTSHIFT_RIGHTSHIFT arith_expr
+	: arith_expr 
+	{
+		$$ = $1;
+	}
+	| shift_expr pick_LEFTSHIFT_RIGHTSHIFT arith_expr { $$ = 0; }
 	;
 pick_LEFTSHIFT_RIGHTSHIFT // Used in: shift_expr
 	: LEFTSHIFT
@@ -456,55 +560,165 @@ pick_LEFTSHIFT_RIGHTSHIFT // Used in: shift_expr
 	;
 arith_expr // Used in: shift_expr, arith_expr
 	: term
+	{
+		$$ = $1;
+	}
 	| arith_expr pick_PLUS_MINUS term
+	{
+		switch($2){
+			case '+':
+				$$ = new AddBinaryNode($1, $3);
+				pool.add($$);
+				break;
+			case '-':
+				$$ = new SubBinaryNode($1, $3);
+				pool.add($$);
+		}
+	}
 	;
 pick_PLUS_MINUS // Used in: arith_expr
-	: PLUS
-	| MINUS
+	: PLUS 
+	{
+		$$ = '+';
+	}
+	| MINUS 
+	{
+		$$ = '-';
+	}
 	;
 term // Used in: arith_expr, term
 	: factor
+	{
+		$$ = $1;
+	}
 	| term pick_multop factor
+	{
+		switch($2){
+			case '*':
+				$$ = new MulBinaryNode($1, $3);
+				pool.add($$);
+				break;
+			case '/':
+				$$ = new DivBinaryNode($1, $3);
+				pool.add($$);
+				break;
+			case '%':
+				$$ = new PerBinaryNode($1, $3);
+				pool.add($$);
+				break;
+			case '|':
+				$$ = new DbSlashBinaryNode($1, $3);
+				pool.add($$);
+		}
+	}
 	;
 pick_multop // Used in: term
 	: STAR
+	{
+		$$ = '*';
+	}
 	| SLASH
+	{
+		$$ = '/';
+	}
 	| PERCENT
+	{
+		$$ = '%';
+	}
 	| DOUBLESLASH
+	{
+		$$ = '|';
+	}
 	;
 factor // Used in: term, factor, power
 	: pick_unop factor
+	{
+		if($2){
+			switch($1){
+				case '+':
+					$$ = new PosUnaryNode($2);
+					pool.add($$);
+					break;
+				case '-':
+					$$ = new NegUnaryNode($2);
+					pool.add($$);
+					break;
+				default:
+					$$ = $2;
+			}
+		}
+	}
 	| power
+	{
+		$$ = $1;
+	}
+	| %empty { $$ = 0; }
 	;
 pick_unop // Used in: factor
 	: PLUS
+	{
+		$$ = '+';
+	}
 	| MINUS
+	{
+		$$ = '-';
+	}
 	| TILDE
+	{
+		$$ = '~';
+	}
 	;
 power // Used in: factor
 	: atom star_trailer DOUBLESTAR factor
+	{
+		if($1 && $4){
+			$$ = new DbStarBinaryNode($1, $4);
+			pool.add($$);
+		}
+	}
 	| atom star_trailer
+	{
+		if(!$2){
+		    $$ = $1;
+		}
+	}
 	;
 star_trailer // Used in: power, star_trailer
 	: star_trailer trailer
-	| %empty
+	| %empty { $$ = 0; }
 	;
 atom // Used in: power
-	: LPAR opt_yield_test RPAR
-	| LSQB opt_listmaker RSQB
-	| LBRACE opt_dictorsetmaker RBRACE
-	| BACKQUOTE testlist1 BACKQUOTE
-	| NAME {delete[] $1;}
-	| NUMBER
-	| plus_STRING
+	: LPAR opt_yield_test RPAR {$$ = $2;}
+	| LSQB opt_listmaker RSQB { $$ = 0;}
+	| LBRACE opt_dictorsetmaker RBRACE { $$ = 0; }
+	| BACKQUOTE testlist1 BACKQUOTE { $$ = 0; }
+	| NAME
+	{
+		$$ = new IdentNode($1);
+		delete[] $1;
+	}
+	| number {$$ = $1;}
+	| plus_STRING { $$ = 0; }
+	;
+number // Used in : atom
+	: FLOAT 
+	{
+		$$ = new FloatLiteral($1); 
+        pool.add($$);
+	}
+	| INTEGER 
+	{
+		$$ = new IntLiteral($1); 
+        pool.add($$); 
+	}
 	;
 pick_yield_expr_testlist_comp // Used in: opt_yield_test
-	: yield_expr
-	| testlist_comp
+	: yield_expr { $$ = 0; }
+	| testlist_comp { $$ = $1; }
 	;
 opt_yield_test // Used in: atom
-	: pick_yield_expr_testlist_comp
-	| %empty
+	: pick_yield_expr_testlist_comp { $$ = $1; }
+	| %empty { $$ = 0; }
 	;
 opt_listmaker // Used in: atom
 	: listmaker
@@ -523,17 +737,17 @@ listmaker // Used in: opt_listmaker
 	| test star_COMMA_test opt_COMMA
 	;
 testlist_comp // Used in: pick_yield_expr_testlist_comp
-	: test comp_for
-	| test star_COMMA_test opt_COMMA
+	: test comp_for  { $$ = 0; }
+	| test star_COMMA_test opt_COMMA { $$ = $1; }
 	;
 lambdef // Used in: test
 	: LAMBDA varargslist COLON test
 	| LAMBDA COLON test
 	;
 trailer // Used in: star_trailer
-	: LPAR opt_arglist RPAR
-	| LSQB subscriptlist RSQB
-	| DOT NAME {delete[] $2;}
+	: LPAR opt_arglist RPAR { $$ = $2; }
+	| LSQB subscriptlist RSQB { $$ = 0; }
+	| DOT NAME { $$ = 0; delete[] $2; }
 	;
 subscriptlist // Used in: trailer
 	: subscript star_COMMA_subscript COMMA
@@ -569,8 +783,14 @@ star_COMMA_expr // Used in: exprlist, star_COMMA_expr
 	| %empty
 	;
 testlist // Used in: expr_stmt, pick_yield_expr_testlist, return_stmt, for_stmt, opt_testlist, yield_expr
-	: test star_COMMA_test COMMA
+	: test star_COMMA_test COMMA 
+	{
+		$$ = $1;
+	}
 	| test star_COMMA_test
+	{
+		$$ = $1;
+	}
 	;
 dictorsetmaker // Used in: opt_dictorsetmaker
 	: test COLON test pick_for_test_test
@@ -597,7 +817,10 @@ opt_testlist // Used in: classdef
 	| %empty
 	;
 arglist // Used in: opt_arglist
-	: star_argument_COMMA pick_argument
+	: star_argument_COMMA pick_argument 
+	{
+		$$ = $2;
+	}
 	;
 star_argument_COMMA // Used in: arglist, star_argument_COMMA
 	: star_argument_COMMA argument COMMA
@@ -612,12 +835,15 @@ opt_DOUBLESTAR_test // Used in: pick_argument
 	| %empty
 	;
 pick_argument // Used in: arglist
-	: argument opt_COMMA
-	| STAR test star_COMMA_argument opt_DOUBLESTAR_test
-	| DOUBLESTAR test
+	: argument opt_COMMA 
+	{
+		$$ = $1;
+	}
+	| STAR test star_COMMA_argument opt_DOUBLESTAR_test { $$ = 0; }
+	| DOUBLESTAR test { $$ = 0; }
 	;
 argument // Used in: star_argument_COMMA, star_COMMA_argument, pick_argument
-	: test opt_comp_for
+	: test opt_comp_for { $$ = $1; }
 	| test EQUAL test
 	;
 opt_comp_for // Used in: argument

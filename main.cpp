@@ -24,11 +24,16 @@
  * 
  */
 
-#include <stdio.h>
+#include <iostream>
+#include <string>
 #include <stdlib.h>
+#include "includes/ast.h"
 #include "parse.tab.h"
 
 extern void init_scanner(FILE *);
+extern "C" {
+  int yydebug;
+}
 
 static FILE * 
 open_file(const char *filename) {
