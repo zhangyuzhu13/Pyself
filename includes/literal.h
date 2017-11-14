@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include "node.h"
 #include "poolOfNodes.h"
 
@@ -112,13 +112,13 @@ public:
   }
   virtual const Literal* opPer(float lhs) const  {
     if ( val == 0 ) throw std::string("Zero Division Error");
-    const Literal* node = new FloatLiteral(lhs - val*(int)(lhs/val));
+    const Literal* node = new FloatLiteral(fmod(fmod(lhs, val) + val, val));
     PoolOfNodes::getInstance().add(node);
     return node;
   }
   virtual const Literal* opPer(int lhs) const  {
     if ( val == 0 ) throw std::string("Zero Division Error");
-    const Literal* node = new FloatLiteral(lhs - val*(int)(lhs / val));
+    const Literal* node = new FloatLiteral(fmod(fmod(lhs, val) + val, val));
     PoolOfNodes::getInstance().add(node);
     return node;
   }
@@ -239,13 +239,13 @@ public:
   }
   virtual const Literal* opPer(float lhs) const  {
     if ( val == 0 ) throw std::string("Zero Division Error");
-    const Literal* node = new IntLiteral(lhs - val*(int)(lhs/val));
+    const Literal* node = new FloatLiteral(fmod(fmod(lhs, val) + val, val));
     PoolOfNodes::getInstance().add(node);
     return node;
   }
   virtual const Literal* opPer(int lhs) const  {
     if ( val == 0 ) throw std::string("Zero Division Error");
-    const Literal* node = new IntLiteral(lhs - val*(int)(lhs / val));
+    const Literal* node = new IntLiteral(fmod(fmod(lhs, val) + val, val));
     PoolOfNodes::getInstance().add(node);
     return node;
   }
