@@ -456,5 +456,10 @@ int debug_yylex(void)
     }
     return token;
 }
+void end_scanner(){
+  if(tok != NULL){
+    free(tok);
+  }
+}
 
 

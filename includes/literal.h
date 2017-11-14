@@ -153,10 +153,12 @@ public:
 
   virtual const Literal* operator+() const { 
     const Literal* node = new FloatLiteral(val);
+    PoolOfNodes::getInstance().add(node);
 	return node;
   }
   virtual const Literal* operator-() const { 
     const Literal* node = new FloatLiteral(-val);
+    PoolOfNodes::getInstance().add(node);
 	return node;
   }
   virtual const Literal* operator+=(const Literal& rhs) const {
@@ -280,10 +282,13 @@ public:
 
   virtual const Literal* operator+() const { 
     const Literal* node = new IntLiteral(val);
+  
+    PoolOfNodes::getInstance().add(node);
 	return node;
   }
   virtual const Literal* operator-() const { 
     const Literal* node = new IntLiteral(-val);
+    PoolOfNodes::getInstance().add(node);
 	return node;
   }
 

@@ -31,6 +31,7 @@
 #include "parse.tab.h"
 class PoolOfNodes;
 extern void init_scanner(FILE *);
+extern void end_scanner();
 extern "C" {
   int yydebug;
 }
@@ -54,11 +55,12 @@ int main(int argc, char * argv[]) {
   init_scanner(input_file);
   yydebug = 0;  /* Change to 1 if you want debugging */
   int parse_had_errors = yyparse();
+  PoolOfNodes::getInstance().drainThePool();
+  fclose(input_file);
+  end_scanner();
   if (parse_had_errors) {
     fprintf(stderr,"Abnormal termination\n");
   }
-  PoolOfNodes::getInstance().drainThePool();
-  fclose(input_file);
   return (parse_had_errors ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
