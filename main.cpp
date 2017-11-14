@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include "includes/ast.h"
 #include "parse.tab.h"
-
+class PoolOfNodes;
 extern void init_scanner(FILE *);
 extern "C" {
   int yydebug;
@@ -57,6 +57,8 @@ int main(int argc, char * argv[]) {
   if (parse_had_errors) {
     fprintf(stderr,"Abnormal termination\n");
   }
+  PoolOfNodes::getInstance().drainThePool();
+  fclose(input_file);
   return (parse_had_errors ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
