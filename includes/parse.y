@@ -565,14 +565,16 @@ arith_expr // Used in: shift_expr, arith_expr
 	}
 	| arith_expr pick_PLUS_MINUS term
 	{
-		switch($2){
-			case '+':
-				$$ = new AddBinaryNode($1, $3);
-				pool.add($$);
-				break;
-			case '-':
-				$$ = new SubBinaryNode($1, $3);
-				pool.add($$);
+		if($1 && $3){
+			switch($2){
+				case '+':
+					$$ = new AddBinaryNode($1, $3);
+					pool.add($$);
+					break;
+				case '-':
+					$$ = new SubBinaryNode($1, $3);
+					pool.add($$);
+			}
 		}
 	}
 	;
@@ -643,7 +645,7 @@ factor // Used in: term, factor, power
 					$$ = new NegUnaryNode($2);
 					pool.add($$);
 					break;
-				default:
+				default :
 					$$ = $2;
 			}
 		}

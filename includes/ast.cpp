@@ -17,8 +17,6 @@ const Literal* PosUnaryNode::eval() const {
     throw "error";
   }
   const Literal* res = node->eval()->operator+();
-  const std::string n = static_cast<IdentNode*>(node)->getIdent();
-  SymbolTable::getInstance().setValue(n, res);
   return res;
 }
 const Literal* NegUnaryNode::eval() const { 
@@ -26,8 +24,6 @@ const Literal* NegUnaryNode::eval() const {
     throw "error";
   }
   const Literal* res = node->eval()->operator-();
-  const std::string n = static_cast<IdentNode*>(node)->getIdent();
-  SymbolTable::getInstance().setValue(n, res);
   return res;
 }
 AsgBinaryNode::AsgBinaryNode(Node* left, Node* right) : 
