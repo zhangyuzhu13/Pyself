@@ -204,8 +204,8 @@ expr_stmt // Used in: small_stmt
 				tempNode = new DbSlashBinaryNode($1, $3);
 				break;
 		}
-		$1 = new AsgBinaryNode($1, tempNode);
-		pool.add($1);
+		$$ = new AsgBinaryNode($1, tempNode);
+		pool.add($$);
 		delete tempNode;
 	}
 	| testlist star_EQUAL
