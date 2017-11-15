@@ -697,6 +697,7 @@ atom // Used in: power
 	| NAME
 	{
 		$$ = new IdentNode($1);
+		pool.add($$);
 		delete[] $1;
 	}
 	| number {$$ = $1;}
