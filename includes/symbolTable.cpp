@@ -16,9 +16,6 @@ const Literal* SymbolTable::getValue(const std::string& name) const {
 }
 
 void SymbolTable::setValue(const std::string& name, const Literal* val) { 
-  std::pair<std::string, const Literal*> temp(name, val);
-  //table[name] = val;
-  table.insert(temp);
- 
+  table[name] = val;
 }
 
