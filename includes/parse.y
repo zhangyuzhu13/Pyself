@@ -166,6 +166,7 @@ star_SEMI_small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	: expr_stmt
 	{
+//		$$ = $1;
 	}
 	| print_stmt
 	| del_stmt
@@ -179,43 +180,45 @@ small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 expr_stmt // Used in: small_stmt
 	: testlist augassign pick_yield_expr_testlist
 	{
-		if($1){
-			Node* tempNode;
-			switch($2){
-				case 1:
-					tempNode = new AddBinaryNode($1, $3);
-					break;
-				case 2:
-					tempNode = new SubBinaryNode($1, $3);
-					break;
-				case 3:
-					tempNode = new MulBinaryNode($1, $3);
-					break;
-				case 4:
-					tempNode = new DivBinaryNode($1, $3);
-					break;
-				case 5:
-					tempNode = new PerBinaryNode($1, $3);
-					break;
-				case 6:
-					tempNode = new DbStarBinaryNode($1, $3);
-					break;
-				case 7:
-					tempNode = new DbSlashBinaryNode($1, $3);
-					break;
-			}
-			$1 = new AsgBinaryNode($1, tempNode);
-			
-			pool.add($1);
-			delete tempNode;
+		Node* tempNode;
+		switch($2){
+			case 1:
+				tempNode = new AddBinaryNode($1, $3);
+				break;
+			case 2:
+				tempNode = new SubBinaryNode($1, $3);
+				break;
+			case 3:
+				tempNode = new MulBinaryNode($1, $3);
+				break;
+			case 4:
+				tempNode = new DivBinaryNode($1, $3);
+				break;
+			case 5:
+				tempNode = new PerBinaryNode($1, $3);
+				break;
+			case 6:
+				tempNode = new DbStarBinaryNode($1, $3);
+				break;
+			case 7:
+				tempNode = new DbSlashBinaryNode($1, $3);
+				break;
 		}
-		
+		$1 = new AsgBinaryNode($1, tempNode);
+		pool.add($1);
+		delete tempNode;
 	}
 	| testlist star_EQUAL
 	{
 		if($2){
 			$$ = new AsgBinaryNode($1, $2);
 			pool.add($$);
+		}
+		else{
+			$$ = $1;
+			if($1){
+				($$)->eval()->print();
+			}
 		}
 	}
 	;
