@@ -7,6 +7,34 @@
 #include "ast.h"
 #include "symbolTable.h"
 
+const Literal* CallNode::eval() const{
+  TableManager& tm = TableManager::getInstance();
+  if(!tm.checkFunc(ident)){
+    std::cout << "function " << ident << " NOT FOUND" << std::endl;
+    std::exception up = std::exception();
+    throw up;
+  }
+  tm.pushScope();
+  tm.getSuite(ideent)->eval();
+  tm.popScope();
+  return nullptr;
+}
+
+FuncNode::FuncNode(const std::string id, Node* stmts) : Node(), ident(id), suite(stmts){
+  TableManager::getInstance().insert(id, suite);
+}
+
+const Literal* FuncNode::eval() const{
+  return nullptr;
+}
+
+const Literal* SuiteNode::eval() const{
+  for(const Node* n : stmts){
+    if(n) n->eval();
+  }
+  return nullptr;
+}
+
 const Literal* IdentNode::eval() const { 
   const Literal* val = SymbolTable::getInstance().getValue(ident);
   return val;

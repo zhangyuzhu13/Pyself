@@ -11,6 +11,38 @@
 
 extern void yyerror(const char*);
 extern void yyerror(const char*, const char);
+/*
+  project 5 CallNode, FuncNode, SuiteNode
+*/
+class CallNode : public Node {
+public:
+  CallNode(const std::string id) : ident(id) { }
+  virtual ~CallNode(){}
+  const std::string getIdent() const { return ident; }
+  virtual const Literal* eval() const;
+private:
+  std::string ident;
+};
+
+class FuncNode : public Node {
+public:
+  FuncNode(const std::string id, Node* stmts);
+  virtual ~FuncNode(){ }
+  const std::string getIdent const { return ident;}
+  virtual const Literal* eval() const;
+private:
+  std::string ident;
+  Node* suite;
+};
+
+class SuiteNode : public Node {
+public:
+  SuiteNode(const std::vevtor<Node*> s) : Node(), stmts(s) { }
+  virtual ~SuiteNode() { }
+  virtual const Literal* eval() const;
+private:
+  std::vector<Node*> stmts;
+};
 
 class IdentNode : public Node {
 public:

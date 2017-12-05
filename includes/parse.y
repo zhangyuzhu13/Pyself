@@ -43,6 +43,8 @@
 	int intNum;
 	float fltNum;
 	char oper;
+	std::vector<Node*> *vec;
+	bool flag;
 }
 %type<oper> pick_PLUS_MINUS pick_multop pick_unop
 %type<str> NAME
@@ -93,6 +95,8 @@ decorated // Used in: compound_stmt
 funcdef // Used in: decorated, compound_stmt
 	: DEF NAME parameters COLON suite
 	{
+	  $$ = new FuncNode($2, $5);
+
 		struct func_info func;
 		func.line = @1.first_line;
 		func.column = @1.first_column;
@@ -226,9 +230,15 @@ pick_yield_expr_testlist // Used in: expr_stmt, star_EQUAL
 star_EQUAL // Used in: expr_stmt, star_EQUAL
 	: star_EQUAL EQUAL pick_yield_expr_testlist
 	{
-		$$ = $3;
+  	  if( $1 == 0 ){
+	    $$ = $3;
+	  }
+ 	  if( $1 != 0 && $3 != 0 ){
+ 	    $$ = new AsgBinaryNode($1, $3);
+ 	    pool.add($$);
+	  }
 	}
-	| %empty { $$ = 0;}
+	| %empty { $$ = nullptr;}
 	;
 augassign // Used in: expr_stmt
 	: PLUSEQUAL      { $$ = 1; }
@@ -448,12 +458,25 @@ opt_AS_COMMA // Used in: except_clause
 	| %empty
 	;
 suite // Used in: funcdef, if_stmt, star_ELIF, while_stmt, for_stmt, try_stmt, plus_except, opt_ELSE, opt_FINALLY, with_stmt, classdef
-	: simple_stmt
+	: simple_stmt { $$ = $1; }
 	| NEWLINE INDENT plus_stmt DEDENT
+	{
+	  $$ = new SuiteNode(*$3);
+	  delete $3;
+	}
 	;
 plus_stmt // Used in: suite, plus_stmt
 	: plus_stmt stmt
+	{
+	  $$ = $1;
+	  $$->push_back($2);
+	}
 	| stmt
+	{
+	  $$ = new std::vector<Node*>();
+	  $$->reserve(16);
+	  $$->push_back($1);
+	}
 	;
 testlist_safe // Used in: list_for
 	: old_test plus_COMMA_old_test opt_COMMA
