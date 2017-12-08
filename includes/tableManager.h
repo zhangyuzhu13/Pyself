@@ -14,8 +14,8 @@ public:
   static TableManager& getInstance();
   const Literal* getEntry(const std::string& name); //get from symbol table
   const Node* getSuite(const std::string& name);  //get from function table
-  void insert(const std::string& name, const Literal* node);
-  void insert(const std::string& name, const Node* node);
+  void insertSymb(const std::string& name, const Literal* node);
+  void insertFunc(const std::string& name, const Node* node);
   bool checkName(const std::string& name) const;
   bool checkFunc(const std::string& name) const;
   void pushScope();
@@ -23,10 +23,12 @@ public:
   void display() const;
 private:
   int currentScope;
+  std::map<const std::string, int> funcScope;
+  std::vector<int> scopeStack;
   std::vector<SymbolTable> tables;
   std::vector<FunctionTable> functions;
   
-  TableManager() : currentScope(0), tables(), functions() {
+  TableManager() : currentScope(0), tables(), functions(), funcScope(), scopeStack() {
     tables.push_back(SymbolTable());
     functions.push_back(FunctionTable());
   }

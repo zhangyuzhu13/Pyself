@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include "ast.h"
-#include "symbolTable.h"
+#include "tableManager.h"
 
 const Literal* CallNode::eval() const{
   TableManager& tm = TableManager::getInstance();
@@ -14,29 +14,54 @@ const Literal* CallNode::eval() const{
     std::exception up = std::exception();
     throw up;
   }
+  const Node* suiteNode = tm.getSuite(ident);
   tm.pushScope();
-  tm.getSuite(ideent)->eval();
+  suiteNode->eval();
+  const Literal* res = TableManager::getInstance().getEntry("__return__");
   tm.popScope();
+  if(res){
+    return res;
+  }
   return nullptr;
-}
-
-FuncNode::FuncNode(const std::string id, Node* stmts) : Node(), ident(id), suite(stmts){
-  TableManager::getInstance().insert(id, suite);
-}
+} 
 
 const Literal* FuncNode::eval() const{
+  TableManager::getInstance().insertFunc(ident, suite);
   return nullptr;
 }
 
 const Literal* SuiteNode::eval() const{
+  if(stmts.empty()) return nullptr;
   for(const Node* n : stmts){
     if(n) n->eval();
   }
   return nullptr;
 }
 
+const Literal* PrintNode::eval() const {
+  if(node){
+    node->eval()->print();
+  }
+  return nullptr;
+}
+
+const Literal* ReturnNode::eval() const {
+
+  if(node){
+    const Literal* result = node->eval();
+    TableManager::getInstance().insertSymb(name, result);
+    return result;
+  }
+  else{
+    const Literal* result = new IntLiteral(0); 
+    TableManager::getInstance().insertSymb(name, result);
+    return 0;
+  }
+
+}
+
 const Literal* IdentNode::eval() const { 
-  const Literal* val = SymbolTable::getInstance().getValue(ident);
+  const Literal* val = TableManager::getInstance().getEntry(ident);
   return val;
 }
 
@@ -58,7 +83,7 @@ AsgBinaryNode::AsgBinaryNode(Node* left, Node* right) :
   BinaryNode(left, right) { 
   const Literal* res = right->eval();
   const std::string n = static_cast<IdentNode*>(left)->getIdent();
-  SymbolTable::getInstance().setValue(n, res);
+  TableManager::getInstance().insertSymb(n, res);
 }
 
 
@@ -134,3 +159,56 @@ const Literal* DbSlashBinaryNode::eval() const{
   return ((*x).DouSlash(*y));
 
 }
+
+const Literal* LessBinaryNode::eval() const {
+  if(!left || !right){
+    throw "error";
+  }
+  const Literal* x = left->eval();
+  const Literal* y = right->eval();
+  return ((*x).Less(*y));
+}
+const Literal* GrtBinaryNode::eval() const {
+  if(!left || !right){
+    throw "error";
+  }
+  const Literal* x = left->eval();
+  const Literal* y = right->eval();
+  return ((*x).Grt(*y));;
+}
+const Literal* EqeqBinaryNode::eval() const {
+  if(!left || !right){
+    throw "error";
+  }
+  const Literal* x = left->eval();
+  const Literal* y = right->eval();
+  return ((*x).Eqeq(*y));;
+}
+const Literal* LeseqBinaryNode::eval() const {
+  if(!left || !right){
+    throw "error";
+  }
+  const Literal* x = left->eval();
+  const Literal* y = right->eval();
+  return ((*x).LessEq(*y));
+}
+const Literal* GrteqBinaryNode::eval() const {
+  if(!left || !right){
+    throw "error";
+  }
+  const Literal* x = left->eval();
+  const Literal* y = right->eval();
+  return ((*x).GrtEq(*y));
+}
+const Literal* NteqBinaryNode::eval() const {
+  if(!left || !right){
+    throw "error";
+  }
+  const Literal* x = left->eval();
+  const Literal* y = right->eval();
+  return ((*x).NotEq(*y));
+}
+
+
+
+

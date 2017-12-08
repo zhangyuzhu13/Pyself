@@ -26,9 +26,9 @@ private:
 
 class FuncNode : public Node {
 public:
-  FuncNode(const std::string id, Node* stmts);
+  FuncNode(const std::string id, Node* stmts) : ident(id), suite(stmts) {  }
   virtual ~FuncNode(){ }
-  const std::string getIdent const { return ident;}
+  const std::string getIdent() const { return ident;}
   virtual const Literal* eval() const;
 private:
   std::string ident;
@@ -37,11 +37,30 @@ private:
 
 class SuiteNode : public Node {
 public:
-  SuiteNode(const std::vevtor<Node*> s) : Node(), stmts(s) { }
+  SuiteNode(const std::vector<Node*> s) : Node(), stmts(s) { }
   virtual ~SuiteNode() { }
   virtual const Literal* eval() const;
 private:
   std::vector<Node*> stmts;
+};
+
+class ReturnNode : public Node {
+public:
+  ReturnNode(Node* n) : Node(), node(n), name("__return__") { }
+  virtual ~ReturnNode() {}
+  virtual const Literal* eval() const;
+private:
+  Node* node;
+  std::string name;
+};
+
+class PrintNode : public Node {
+public:
+  PrintNode(Node* n) : Node(), node(n) {}
+  virtual ~PrintNode() {}
+  virtual const Literal* eval() const;
+private:
+  Node* node;
 };
 
 class IdentNode : public Node {
@@ -132,3 +151,42 @@ public:
   DbSlashBinaryNode(Node* left, Node* right) : BinaryNode(left, right) { }
   virtual const Literal* eval() const;
 };
+
+class LessBinaryNode : public BinaryNode {
+public:
+  LessBinaryNode(Node* left, Node* right) : BinaryNode(left, right) {}
+  virtual const Literal* eval() const;
+};
+
+class GrtBinaryNode : public BinaryNode {
+public:
+  GrtBinaryNode(Node* left, Node* right) : BinaryNode(left, right) {}
+  virtual const Literal* eval() const;
+};
+
+class EqeqBinaryNode : public BinaryNode {
+public:
+  EqeqBinaryNode(Node* left, Node* right) : BinaryNode(left, right) {}
+  virtual const Literal* eval() const;
+};
+
+class GrteqBinaryNode : public BinaryNode {
+public:
+  GrteqBinaryNode(Node* left, Node* right) : BinaryNode(left, right) {}
+  virtual const Literal* eval() const;
+};
+
+class LeseqBinaryNode : public BinaryNode {
+public:
+  LeseqBinaryNode(Node* left, Node* right) : BinaryNode(left, right) {}
+  virtual const Literal* eval() const;
+};
+
+class NteqBinaryNode : public BinaryNode {
+public:
+  NteqBinaryNode(Node* left, Node* right) : BinaryNode(left, right) {}
+  virtual const Literal* eval() const;
+};
+
+
+

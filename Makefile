@@ -4,7 +4,7 @@ YACC = bison
 CFLAGS = -g -std=c++11 -W -Wall -Weffc++ -Wextra -pedantic -O0
 LEXFLAGS = -Wno-unused -Wno-sign-compare -Wno-deprecated-register
 
-OBJS = main.o parse.tab.o lex.yy.o ast.o symbolTable.o poolOfNodes.o
+OBJS = main.o parse.tab.o lex.yy.o ast.o symbolTable.o poolOfNodes.o functionTable.o tableManager.o
 
 run: $(OBJS)
 	$(CCC) $(CFLAGS) -o run $(OBJS)
@@ -36,7 +36,12 @@ symbolTable.o: includes/symbolTable.cpp includes/symbolTable.h
 poolOfNodes.o: includes/poolOfNodes.cpp includes/poolOfNodes.h \
   includes/node.h
 	$(CCC) $(CFLAGS) -c includes/poolOfNodes.cpp
-	
+
+functionTable.o: includes/functionTable.cpp includes/functionTable.h
+	$(CCC) $(CFLAGS) -c includes/functionTable.cpp
+
+tableManager.o: includes/tableManager.cpp includes/tableManager.h
+	$(CCC) $(CFLAGS) -c includes/tableManager.cpp
 clean:
 	rm -f run *.o parse.tab.c lex.yy.c
 	rm -f parse.tab.h

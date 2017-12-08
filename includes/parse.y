@@ -48,11 +48,13 @@
 }
 %type<oper> pick_PLUS_MINUS pick_multop pick_unop
 %type<str> NAME
-%type<intNum> INTEGER augassign 
+%type<intNum> INTEGER augassign comp_op 
 %type<fltNum> FLOAT
 %type<node> number atom power factor term arith_expr testlist pick_yield_expr_testlist
-star_EQUAL shift_expr and_expr xor_expr expr comparison not_test and_test or_test opt_IF_ELSE test star_COMMA_test expr_stmt parameters star_trailer trailer opt_arglist 
-arglist argument pick_argument pick_yield_expr_testlist_comp opt_yield_test testlist_comp print_stmt opt_test
+%type<node> star_EQUAL shift_expr and_expr xor_expr expr comparison not_test and_test or_test opt_IF_ELSE test star_COMMA_test expr_stmt parameters star_trailer trailer opt_arglist 
+%type<node> arglist argument pick_argument pick_yield_expr_testlist_comp opt_yield_test testlist_comp print_stmt opt_test
+%type<node> suite funcdef stmt simple_stmt small_stmt star_SEMI_small_stmt compound_stmt return_stmt flow_stmt 
+%type<vec> plus_stmt
 %start start
 
 %locations
@@ -65,12 +67,23 @@ start
 file_input // Used in: start
 	: star_NEWLINE_stmt ENDMARKER
 	{
-		reverse(func_stack);
+		
 	}
 	;
 pick_NEWLINE_stmt // Used in: star_NEWLINE_stmt
 	: NEWLINE
+	{
+		
+	}
 	| stmt
+	{
+		if($1){
+			$1->eval();
+		}
+		else{
+			std::cout<< "can not evaluate this program" << std::endl;
+		}
+	}
 	;
 star_NEWLINE_stmt // Used in: file_input, star_NEWLINE_stmt
 	: star_NEWLINE_stmt pick_NEWLINE_stmt
@@ -95,18 +108,11 @@ decorated // Used in: compound_stmt
 funcdef // Used in: decorated, compound_stmt
 	: DEF NAME parameters COLON suite
 	{
-	  $$ = new FuncNode($2, $5);
-
-		struct func_info func;
-		func.line = @1.first_line;
-		func.column = @1.first_column;
-		func.name = $2;
-	    delete[] $2;	
-		func.complexity = ++complexity;
-		func_stack.push(func);
-		complexity = 0;
-		old_complexity = 0;
-		isFinally = false;
+	  if($2 && $5){
+	  	$$ = new FuncNode($2, $5);
+ 	  	pool.add($$);
+	  }
+	  else{ $$ = 0;}
 	}
 	;
 parameters // Used in: funcdef
@@ -152,34 +158,43 @@ star_fpdef_notest // Used in: fplist, star_fpdef_notest
 stmt // Used in: pick_NEWLINE_stmt, plus_stmt
 	: simple_stmt
 	{
-//		$$ = $1;
+		$$ = $1;
 	}
 	| compound_stmt
+	{
+		$$ = $1;
+	}
 	;
 simple_stmt // Used in: stmt, suite
 	: small_stmt star_SEMI_small_stmt SEMI NEWLINE
+	{
+	  	$$ = $1;
+	}
 	| small_stmt star_SEMI_small_stmt NEWLINE
 	{
-//		$$ = $1;
+		$$ = $1;
 	}
 	;
 star_SEMI_small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	: star_SEMI_small_stmt SEMI small_stmt
-	| %empty
+	{ 
+   	  $$ = $3;
+	}
+	| %empty { $$ = 0; }
 	;
 small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
-	: expr_stmt
-	{
-//		$$ = $1;
+	: expr_stmt 
+	{ 
+	  $$ = $1; 
 	}
-	| print_stmt
-	| del_stmt
-	| pass_stmt
-	| flow_stmt
-	| import_stmt
-	| global_stmt
-	| exec_stmt
-	| assert_stmt
+	| print_stmt { $$ = $1; }
+	| del_stmt { $$ = 0;}
+	| pass_stmt { $$ = 0;}
+	| flow_stmt { $$ = $1;}
+	| import_stmt { $$ = 0;}
+	| global_stmt { $$ = 0;}
+	| exec_stmt { $$ = 0;}
+	| assert_stmt { $$ = 0;} 
 	;
 expr_stmt // Used in: small_stmt
 	: testlist augassign pick_yield_expr_testlist
@@ -209,7 +224,9 @@ expr_stmt // Used in: small_stmt
 				break;
 		}
 		$1 = new AsgBinaryNode($1, tempNode);
+                $$ = $1;
 		pool.add($1);
+                pool.add($$);
 		delete tempNode;
 	}
 	| testlist star_EQUAL
@@ -220,9 +237,11 @@ expr_stmt // Used in: small_stmt
 		}
 		else{
 			$$ = $1;
+			/*
 			if($1){
 				($$)->eval()->print();
 			}
+			*/
 		}
 	}
 	;
@@ -241,7 +260,7 @@ star_EQUAL // Used in: expr_stmt, star_EQUAL
  	    pool.add($$);
 	  }
 	}
-	| %empty { $$ = nullptr;}
+	| %empty { $$ = 0;}
 	;
 augassign // Used in: expr_stmt
 	: PLUSEQUAL      { $$ = 1; }
@@ -260,8 +279,11 @@ augassign // Used in: expr_stmt
 print_stmt // Used in: small_stmt
 	: PRINT opt_test
 	{
-		$$ = $2;
-		($2)->eval()->print();
+		if($2){
+			$$ = new PrintNode($2);
+ 			pool.add($$);
+		}
+		else{ $$ = 0;}
 	}
 	| PRINT RIGHTSHIFT test opt_test_2 { $$ = 0; }
 	;
@@ -294,11 +316,11 @@ pass_stmt // Used in: small_stmt
 	: PASS
 	;
 flow_stmt // Used in: small_stmt
-	: break_stmt
-	| continue_stmt
-	| return_stmt
-	| raise_stmt
-	| yield_stmt
+	: break_stmt {$$ = 0;}
+	| continue_stmt { $$ = 0; }
+	| return_stmt { $$ = $1; }
+	| raise_stmt { $$ = 0; }
+	| yield_stmt { $$ = 0; }
 	;
 break_stmt // Used in: flow_stmt
 	: BREAK
@@ -307,8 +329,16 @@ continue_stmt // Used in: flow_stmt
 	: CONTINUE
 	;
 return_stmt // Used in: flow_stmt
-	: RETURN testlist
-	| RETURN
+	: RETURN testlist 
+	{ 
+	  $$ = new ReturnNode($2);
+	  pool.add($$); 
+	}
+	| RETURN 
+	{ 
+	  $$ = new ReturnNode(nullptr);
+	  pool.add($$); 
+	}
 	;
 yield_stmt // Used in: flow_stmt
 	: yield_expr
@@ -384,21 +414,21 @@ assert_stmt // Used in: small_stmt
 	| ASSERT test
 	;
 compound_stmt // Used in: stmt
-	: if_stmt{complexity++;}
-	| while_stmt{complexity++;}
-	| for_stmt{complexity++;}
-	| try_stmt
-	| with_stmt
-	| funcdef
-	| classdef
-	| decorated
+	: if_stmt { $$ = 0;}
+	| while_stmt { $$ = 0; }
+	| for_stmt { $$ = 0; }
+	| try_stmt { $$ = 0; }
+	| with_stmt { $$ = 0; }
+	| funcdef { $$ = $1; }
+	| classdef { $$ = 0;}
+	| decorated { $$ = 0; }
 	;
 if_stmt // Used in: compound_stmt
 	: IF test COLON suite star_ELIF ELSE COLON suite
 	| IF test COLON suite star_ELIF
 	;
 star_ELIF // Used in: if_stmt, star_ELIF
-	: star_ELIF ELIF test COLON suite{complexity++;}
+	: star_ELIF ELIF test COLON suite
 	| %empty
 	;
 while_stmt // Used in: compound_stmt
@@ -412,29 +442,20 @@ for_stmt // Used in: compound_stmt
 try_stmt // Used in: compound_stmt
 	: TRY COLON suite plus_except opt_ELSE opt_FINALLY
 	{ 
-		if(isFinally)
-		{
-			complexity = old_complexity;
-		}
-		else
-		{
-			complexity++;
-		}
-		old_complexity = 0;
-		isFinally = false;
+	
 	}
-	| TRY COLON suite FINALLY COLON suite  { complexity = old_complexity;}
+	| TRY COLON suite FINALLY COLON suite 
 	;
 plus_except // Used in: try_stmt, plus_except
-	: plus_except except_clause COLON suite { complexity++; }
-	| except_clause COLON suite { complexity++; }
+	: plus_except except_clause COLON suite 
+	| except_clause COLON suite 
 	;
 opt_ELSE // Used in: try_stmt
 	: ELSE COLON suite
 	| %empty
 	;
 opt_FINALLY // Used in: try_stmt
-	: FINALLY COLON suite { isFinally = true; }
+	: FINALLY COLON suite
 	| %empty
 	;
 with_stmt // Used in: compound_stmt
@@ -464,21 +485,28 @@ suite // Used in: funcdef, if_stmt, star_ELIF, while_stmt, for_stmt, try_stmt, p
 	: simple_stmt { $$ = $1; }
 	| NEWLINE INDENT plus_stmt DEDENT
 	{
-	  $$ = new SuiteNode(*$3);
-	  delete $3;
+	  if($3){
+	    $$ = new SuiteNode(*$3);	 
+	    delete $3;
+	  }
+	  else{ $$ = 0; }
 	}
 	;
 plus_stmt // Used in: suite, plus_stmt
 	: plus_stmt stmt
 	{
 	  $$ = $1;
-	  $$->push_back($2);
-	}
+	  if($2){
+	  	$$->push_back($2);
+	  }
+ 	}
 	| stmt
 	{
 	  $$ = new std::vector<Node*>();
 	  $$->reserve(16);
-	  $$->push_back($1);
+	  if($1){
+	    $$->push_back($1);
+	  }
 	}
 	;
 testlist_safe // Used in: list_for
@@ -534,20 +562,48 @@ comparison // Used in: not_test, comparison
 	{
 		$$ = $1;
 	}
-	| comparison comp_op expr { $$ = 0; }
+	| comparison comp_op expr 
+	{ 
+		switch($2){
+			case 1:
+				$$ = new LessBinaryNode($1, $3);
+				pool.add($$);
+				break;
+			case 2:
+				$$ = new GrtBinaryNode($1, $3);
+				pool.add($$);
+				break;
+			case 3:
+				$$ = new EqeqBinaryNode($1, $3);
+				pool.add($$);
+				break;
+			case 4:
+				$$ = new GrteqBinaryNode($1, $3);
+				pool.add($$);
+				break;
+			case 5:
+				$$ = new LeseqBinaryNode($1, $3);	
+				pool.add($$);
+				break;
+			case 6:
+				$$ = new NteqBinaryNode($1, $3);
+				pool.add($$);
+				break;
+		} 
+	}
 	;
 comp_op // Used in: comparison
-	: LESS
-	| GREATER
-	| EQEQUAL
-	| GREATEREQUAL
-	| LESSEQUAL
-	| GRLT
-	| NOTEQUAL
-	| IN
-	| NOT IN
-	| IS
-	| IS NOT
+	: LESS		{ $$ = 1;}
+	| GREATER	{ $$ = 2;}
+	| EQEQUAL	{ $$ = 3;}
+	| GREATEREQUAL	{ $$ = 4;}
+	| LESSEQUAL	{ $$ = 5;}
+	| GRLT		{ $$ = 0;}
+	| NOTEQUAL	{ $$ = 6;}
+	| IN		{ $$ = 0;}
+	| NOT IN	{ $$ = 0;}
+	| IS		{ $$ = 0;}
+	| IS NOT	{ $$ = 0;}
 	;
 expr // Used in: exec_stmt, with_item, comparison, expr, exprlist, star_COMMA_expr
 	: xor_expr
@@ -703,13 +759,22 @@ power // Used in: factor
 	}
 	| atom star_trailer
 	{
-		if(!$2){
+		if($2 && $1){
+  		    std::string tempName = dynamic_cast<IdentNode*>($1)->getIdent();
+		    $$ = new CallNode(tempName);
+		    pool.add($$);
+		}
+		else{
 		    $$ = $1;
 		}
 	}
 	;
 star_trailer // Used in: power, star_trailer
 	: star_trailer trailer
+	{
+		$$ = new IntLiteral(0);
+		pool.add($$);
+	}
 	| %empty { $$ = 0; }
 	;
 atom // Used in: power
@@ -730,12 +795,12 @@ number // Used in : atom
 	: FLOAT 
 	{
 		$$ = new FloatLiteral($1); 
-        pool.add($$);
+        	pool.add($$);
 	}
 	| INTEGER 
 	{
 		$$ = new IntLiteral($1); 
-        pool.add($$); 
+        	pool.add($$); 
 	}
 	;
 pick_yield_expr_testlist_comp // Used in: opt_yield_test
@@ -870,7 +935,7 @@ pick_argument // Used in: arglist
 	;
 argument // Used in: star_argument_COMMA, star_COMMA_argument, pick_argument
 	: test opt_comp_for { $$ = $1; }
-	| test EQUAL test
+	| test EQUAL test 
 	;
 opt_comp_for // Used in: argument
 	: comp_for
