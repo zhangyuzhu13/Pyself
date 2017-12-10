@@ -44,13 +44,13 @@ bool TableManager::checkFunc(const std::string& name) const {
 void TableManager::pushScope(){
   functions.push_back(FunctionTable());
   tables.push_back(SymbolTable());
-  currentScope = tables.size() - 1;
+  currentScope++;
 }
 
 void TableManager::popScope(){
   functions.pop_back();
   tables.pop_back();
-  currentScope = tables.size() - 1;
+  currentScope--;
 }
 
 
