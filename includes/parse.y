@@ -421,7 +421,7 @@ compound_stmt // Used in: stmt
 	| with_stmt { $$ = 0; }
 	| funcdef { $$ = $1; }
 	| classdef { $$ = 0;}
-	| dncorated { $$ = 0; }
+	| decorated { $$ = 0; }
 	;
 if_stmt // Used in: compound_stmt
 	: IF test COLON suite star_ELIF ELSE COLON suite 
