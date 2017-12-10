@@ -27,6 +27,8 @@ private:
 class FuncNode : public Node {
 public:
   FuncNode(const std::string id, Node* stmts) : ident(id), suite(stmts) {  }
+  FuncNode(const FuncNode&) = delete;
+  const FuncNode* operator=(const FuncNode&) = delete;
   virtual ~FuncNode(){ }
   const std::string getIdent() const { return ident;}
   virtual const Literal* eval() const;
@@ -47,6 +49,8 @@ private:
 class ReturnNode : public Node {
 public:
   ReturnNode(Node* n) : Node(), node(n), name("__return__") { }
+  ReturnNode(const ReturnNode&) = delete;
+  const ReturnNode* operator=(const ReturnNode&) = delete;
   virtual ~ReturnNode() {}
   virtual const Literal* eval() const;
 private:
@@ -57,6 +61,8 @@ private:
 class PrintNode : public Node {
 public:
   PrintNode(Node* n) : Node(), node(n) {}
+  PrintNode(const PrintNode&) = delete;
+  const PrintNode* operator=(const PrintNode&) = delete;
   virtual ~PrintNode() {}
   virtual const Literal* eval() const;
 private:
@@ -66,6 +72,8 @@ private:
 class IfNode : public Node{
 public:
   IfNode(Node* te, Node* iSuite, Node* eSuite) : Node(), test(te), ifSuite(iSuite), elseSuite(eSuite){ }
+  IfNode(const IfNode&) = delete;
+  const IfNode* operator=(const IfNode&) = delete;
   virtual ~IfNode(){}
   virtual const Literal* eval() const;
 private:

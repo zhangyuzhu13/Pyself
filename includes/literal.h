@@ -280,7 +280,7 @@ public:
   }
 
   virtual const Literal* GrtEq(const Literal& rhs) const {
-    rhs.opGrtEq(val);
+    return rhs.opGrtEq(val);
   }
   virtual const Literal* opGrtEq(float lhs) const {
     const Literal* node;

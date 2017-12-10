@@ -14,3 +14,5 @@ Problems that I had in completing this project:
 I have many troubles in doing this project. First is the scope. I used th static scope to implement this function part. When the function is called, the scope will increase and push the new functiontable and symboltable When the function is ended, the scope will decrease and pop the functiontable and symbol table. The "return" symbol will cause the scope stop so when eval() the nodes, I go to the symboltable to find if there is a __return__symbol,if there is, I will stop and return the Literal node get from __return__ and decrease the scope.
 About the "if" and "else" part, I add a isTrue() in the Literal node and IfNode. Every operator of < > == >= <= != is a new Node, when eval() them , user the isTrue() to find if the value if true or false, isTrue() will return true when the value is bigger than 0;
 
+At last, I fix the warning and my program are no memory leak.
+

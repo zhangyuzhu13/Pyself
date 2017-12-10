@@ -111,8 +111,9 @@ funcdef // Used in: decorated, compound_stmt
 	  if($2 && $5){
 	  	$$ = new FuncNode($2, $5);
  	  	pool.add($$);
+		delete[] $2;
 	  }
-	  else{ $$ = 0;}
+	  else{ $$ = 0; delete[] $2;}
 	}
 	;
 parameters // Used in: funcdef
@@ -501,7 +502,8 @@ suite // Used in: funcdef, if_stmt, star_ELIF, while_stmt, for_stmt, try_stmt, p
 	{
 	  if($3){
 	    $$ = new SuiteNode(*$3);	 
-	    delete $3;
+	    pool.add($$);
+		delete $3;
 	  }
 	  else{ $$ = 0; }
 	}
