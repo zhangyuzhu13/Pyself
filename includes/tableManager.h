@@ -23,12 +23,10 @@ public:
   void display() const;
 private:
   int currentScope;
-  std::map<const std::string, int> funcScope;
-  std::vector<int> scopeStack;
   std::vector<SymbolTable> tables;
   std::vector<FunctionTable> functions;
   
-  TableManager() : currentScope(0), tables(), functions(), funcScope(), scopeStack() {
+  TableManager() : currentScope(0), tables(), functions() {
     tables.push_back(SymbolTable());
     functions.push_back(FunctionTable());
   }

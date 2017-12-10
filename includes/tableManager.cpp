@@ -15,6 +15,7 @@ const Literal* TableManager::getEntry(const std::string& name){
       return rit->getEntry(name);
   }
   if(rit == tables.rend()) throw name+std::string(" not found");
+  return nullptr;
 }
 const Node* TableManager::getSuite(const std::string& name){
  std::vector<FunctionTable>::reverse_iterator rit = functions.rbegin();
@@ -23,6 +24,7 @@ const Node* TableManager::getSuite(const std::string& name){
       return rit->getSuite(name);
   }
   if(rit == functions.rend()) throw name+std::string(" not found");
+  return nullptr;
 }
 
 void TableManager::insertSymb(const std::string& name, const Literal* node){ 
