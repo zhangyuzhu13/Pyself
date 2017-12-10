@@ -16,13 +16,9 @@ const Literal* CallNode::eval() const{
   }
   const Node* suiteNode = tm.getSuite(ident);
   tm.pushScope();
-  suiteNode->eval();
-  const Literal* res = TableManager::getInstance().getEntry("__return__");
+  const Literal* ret = suiteNode->eval();
   tm.popScope();
-  if(res){
-    return res;
-  }
-  return nullptr;
+  return ret;
 } 
 
 const Literal* FuncNode::eval() const{
@@ -33,14 +29,21 @@ const Literal* FuncNode::eval() const{
 const Literal* SuiteNode::eval() const{
   if(stmts.empty()) return nullptr;
   for(const Node* n : stmts){
-    if(n) n->eval();
+    if(n){
+	   	n->eval();
+		if(TableManager::getInstance().checkName("__return__")){
+		return TableManager::getInstance().getEntry("__return__");
+		}
+	}
+	else{ throw std::string("nullptr in suite");}
   }
   return nullptr;
 }
 
 const Literal* PrintNode::eval() const {
   if(node){
-    node->eval()->print();
+	  const Literal* res = node->eval();
+	  if(res) res->print();
   }
   return nullptr;
 }
@@ -58,6 +61,19 @@ const Literal* ReturnNode::eval() const {
     return 0;
   }
 
+}
+
+const Literal* IfNode::eval()const {
+  if(!test) return nullptr;
+  const Literal* res = test->eval();
+  if(!res) throw new std::string("if suitation is not correst");
+  if(res->isTrue()){
+    ifSuite->eval();
+  }
+  else if(elseSuite){
+    elseSuite->eval();
+  }
+  return nullptr;
 }
 
 const Literal* IdentNode::eval() const { 
@@ -81,9 +97,7 @@ const Literal* NegUnaryNode::eval() const {
 }
 AsgBinaryNode::AsgBinaryNode(Node* left, Node* right) : 
   BinaryNode(left, right) { 
-  const Literal* res = right->eval();
-  const std::string n = static_cast<IdentNode*>(left)->getIdent();
-  TableManager::getInstance().insertSymb(n, res);
+  
 }
 
 
@@ -92,7 +106,8 @@ const Literal* AsgBinaryNode::eval() const {
     throw "error";
   }
   const Literal* res = right->eval();
-
+  const std::string n = static_cast<IdentNode*>(left)->getIdent();
+  TableManager::getInstance().insertSymb(n, res);
   return res;
 }
 

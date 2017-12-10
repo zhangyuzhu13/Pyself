@@ -65,6 +65,7 @@ public:
   virtual const Literal* opNotEq(float) const =0;
   virtual const Literal* opNotEq(int) const =0;
 
+  virtual bool isTrue() const = 0;
   virtual const Literal* eval() const = 0;
   virtual void print() const { 
     std::cout << "No Way" << std::endl; 
@@ -345,6 +346,7 @@ public:
   virtual const Literal* operator-=(const Literal& rhs) const {
     return rhs.opSubt(val);
   }
+  virtual bool isTrue() const { return val > 0;}
   virtual const Literal* eval() const { return this; }
   virtual void print() const { 
     std::cout << "FLOAT: " << val << std::endl; 
@@ -631,7 +633,7 @@ public:
   virtual const Literal* operator-=(const Literal& rhs) const {
   	return rhs.opSubt(val);
   }
-
+  virtual bool isTrue() const { return val > 0;}
   virtual const Literal* eval() const { return this; }
   virtual void print() const { 
     std::cout << "INT: " << val << std::endl; 

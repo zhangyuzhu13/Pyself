@@ -63,6 +63,17 @@ private:
   Node* node;
 };
 
+class IfNode : public Node{
+public:
+  IfNode(Node* te, Node* iSuite, Node* eSuite) : Node(), test(te), ifSuite(iSuite), elseSuite(eSuite){ }
+  virtual ~IfNode(){}
+  virtual const Literal* eval() const;
+private:
+  Node* test;
+  Node* ifSuite;
+  Node* elseSuite;
+};
+
 class IdentNode : public Node {
 public:
   IdentNode(const std::string id) : Node(), ident(id) { } 

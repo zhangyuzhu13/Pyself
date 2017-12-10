@@ -53,7 +53,7 @@
 %type<node> number atom power factor term arith_expr testlist pick_yield_expr_testlist
 %type<node> star_EQUAL shift_expr and_expr xor_expr expr comparison not_test and_test or_test opt_IF_ELSE test star_COMMA_test expr_stmt parameters star_trailer trailer opt_arglist 
 %type<node> arglist argument pick_argument pick_yield_expr_testlist_comp opt_yield_test testlist_comp print_stmt opt_test
-%type<node> suite funcdef stmt simple_stmt small_stmt star_SEMI_small_stmt compound_stmt return_stmt flow_stmt 
+%type<node> suite funcdef stmt simple_stmt small_stmt star_SEMI_small_stmt compound_stmt return_stmt flow_stmt if_stmt
 %type<vec> plus_stmt
 %start start
 
@@ -414,18 +414,32 @@ assert_stmt // Used in: small_stmt
 	| ASSERT test
 	;
 compound_stmt // Used in: stmt
-	: if_stmt { $$ = 0;}
+	: if_stmt { $$ = $1;}
 	| while_stmt { $$ = 0; }
 	| for_stmt { $$ = 0; }
 	| try_stmt { $$ = 0; }
 	| with_stmt { $$ = 0; }
 	| funcdef { $$ = $1; }
 	| classdef { $$ = 0;}
-	| decorated { $$ = 0; }
+	| dncorated { $$ = 0; }
 	;
 if_stmt // Used in: compound_stmt
-	: IF test COLON suite star_ELIF ELSE COLON suite
+	: IF test COLON suite star_ELIF ELSE COLON suite 
+	{
+	  if($2){
+	    $$ = new IfNode($2,$4,$8);
+		pool.add($$);
+	  }
+	  else $$ = 0;
+	}
 	| IF test COLON suite star_ELIF
+ 	{
+	  if($2){
+	    $$ = new IfNode($2,$4,nullptr);
+		pool.add($$);
+	  }
+	  else $$ = 0;
+	}
 	;
 star_ELIF // Used in: if_stmt, star_ELIF
 	: star_ELIF ELIF test COLON suite

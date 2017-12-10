@@ -2,12 +2,15 @@ Name: Yuzhu Zhang
 
 Clemson Email Address: yuzhuz@clemson.edu
 
-Project no: 4
+Project no: 5
 
-Project due date: 2017.11.13
+Project due date: 2017.12.08
 
-Project description: Building an AST
+Project description: Function Scope and Decision
 
-The easiest part of this project: implement multiple classes of node 
+The easiest part of this project: implement the > < == >= <= != nodes 
 
-Problems that I had in completing this project: new the appropriate node object in the parse.y file and fix the segmentation fault 11.
+Problems that I had in completing this project: 
+I have many troubles in doing this project. First is the scope. I used th static scope to implement this function part. When the function is called, the scope will increase and push the new functiontable and symboltable When the function is ended, the scope will decrease and pop the functiontable and symbol table. The "return" symbol will cause the scope stop so when eval() the nodes, I go to the symboltable to find if there is a __return__symbol,if there is, I will stop and return the Literal node get from __return__ and decrease the scope.
+About the "if" and "else" part, I add a isTrue() in the Literal node and IfNode. Every operator of < > == >= <= != is a new Node, when eval() them , user the isTrue() to find if the value if true or false, isTrue() will return true when the value is bigger than 0;
+
