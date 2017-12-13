@@ -2,17 +2,16 @@ Name: Yuzhu Zhang
 
 Clemson Email Address: yuzhuz@clemson.edu
 
-Project no: 5
+Project no: 6
 
-Project due date: 2017.12.08
+Project due date: 2017.12.13
 
-Project description: Function Scope and Decision
+Project description: parameters and recursive
 
-The easiest part of this project: implement the > < == >= <= != nodes 
+The easiest part of this project: handle memory leak 
 
 Problems that I had in completing this project: 
-I have many troubles in doing this project. First is the scope. I used th static scope to implement this function part. When the function is called, the scope will increase and push the new functiontable and symboltable When the function is ended, the scope will decrease and pop the functiontable and symbol table. The "return" symbol will cause the scope stop so when eval() the nodes, I go to the symboltable to find if there is a __return__symbol,if there is, I will stop and return the Literal node get from __return__ and decrease the scope.
-About the "if" and "else" part, I add a isTrue() in the Literal node and IfNode. Every operator of < > == >= <= != is a new Node, when eval() them , user the isTrue() to find if the value if true or false, isTrue() will return true when the value is bigger than 0;
+I implement the parameters part with std::vector. I add a vector into SuiteNode and before I new a FuncNode, I will set the vector which collect the parameters into the SuiteNode and then use this SuiteNode to new FuncNode. And In the CallNode, I also add a vector to collect th argument and when eval a CallNode, I will for loop the two vector. If they have the same size I will new AsgBinaryNode to each pair and then eval() them. After finish the parameters then go on the suite stmt eval().
+The recursive part is almost implement before in project 5. I just find a bug that  Imy checkFunc is just check the currentScope func which I cannot use the function which in the out side, so I just change checkFunc to reverse iterator and search the scope before current scope and the bug fixed.
 
-At last, I fix the warning and my program are no memory leak.
-
+Finally I check the memory leak and delete the vector, so there is no memory leak at all. Also I fixed the warning part. It could be a good project at last and I am so excited about doing this series of projects. It is an unforgettable experience of taking this course. 
