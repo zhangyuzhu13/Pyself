@@ -16,6 +16,7 @@ const Literal* CallNode::eval() const{
   }
   const Node* suiteNode = tm.getSuite(ident);
   tm.pushScope();
+  dynamic_cast<const SuiteNode*>(suiteNode)->evalParam(arguments);
   const Literal* ret = suiteNode->eval();
   tm.popScope();
   return ret;
@@ -38,6 +39,19 @@ const Literal* SuiteNode::eval() const{
 	else{ throw std::string("nullptr in suite");}
   }
   return nullptr;
+}
+
+const Literal* SuiteNode::evalParam(const std::vector<Node*> actual) const {
+	if(parameters.size() != actual.size()){
+		throw std::string("invalid parameter number ");
+	}
+	PoolOfNodes& pool = PoolOfNodes::getInstance();
+	for(int i = 0; i < parameters.size(); i++){
+		AsgBinaryNode* asg = new AsgBinaryNode(parameters[i], actual[i]);
+		pool.add(asg);
+		asg->eval();
+	}
+	return nullptr;
 }
 
 const Literal* PrintNode::eval() const {

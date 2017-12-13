@@ -16,12 +16,14 @@ extern void yyerror(const char*, const char);
 */
 class CallNode : public Node {
 public:
-  CallNode(const std::string id) : ident(id) { }
+  CallNode(const std::string id, const std::vector<Node*> args) : ident(id), arguments(args) { }
   virtual ~CallNode(){}
   const std::string getIdent() const { return ident; }
+  const std::vector<Node*> getArgs() const { return this->arguments;}
   virtual const Literal* eval() const;
 private:
   std::string ident;
+  std::vector<Node*> arguments;
 };
 
 class FuncNode : public Node {
@@ -39,11 +41,14 @@ private:
 
 class SuiteNode : public Node {
 public:
-  SuiteNode(const std::vector<Node*> s) : Node(), stmts(s) { }
+  SuiteNode(const std::vector<Node*> s) : Node(), stmts(s), parameters(){ }
   virtual ~SuiteNode() { }
+  virtual void setParameters(const std::vector<Node*> p)  { this->parameters = p; }
+  virtual const Literal* evalParam(const std::vector<Node*> actual) const;
   virtual const Literal* eval() const;
 private:
   std::vector<Node*> stmts;
+  std::vector<Node*> parameters;
 };
 
 class ReturnNode : public Node {
