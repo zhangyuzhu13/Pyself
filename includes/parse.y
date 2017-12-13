@@ -811,6 +811,7 @@ power // Used in: factor
   		    std::string tempName = dynamic_cast<IdentNode*>($1)->getIdent();
 		    $$ = new CallNode(tempName, *$2);
 		    pool.add($$);
+			delete $2;
 		}
 		else{
 		    $$ = $1;
@@ -981,6 +982,7 @@ star_argument_COMMA // Used in: arglist, star_argument_COMMA
 		else{
 			$$ = $1;
 		}
+		delete $1;
 	}
 	| %empty
 	{

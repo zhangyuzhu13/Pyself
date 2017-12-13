@@ -16,7 +16,7 @@ void FunctionTable::insert(const std::string& name, const Node* suite){
 
 const Node* FunctionTable::getSuite(const std::string& name) const {
   std::map<std::string, const Node*>::const_iterator it = functions.find(name);
-  if ( it == functions.end() ){ throw std::string(" not found");}
+  if ( it == functions.end() ){ throw std::string(" not found!!");}
   return it->second; 
 }
 
