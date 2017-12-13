@@ -17,6 +17,8 @@ const Literal* CallNode::eval() const{
   const Node* suiteNode = tm.getSuite(ident);
   tm.pushScope();
   dynamic_cast<const SuiteNode*>(suiteNode)->evalParam(arguments);
+  FuncNode *func = new FuncNode(ident, suiteNode);
+  func->eval();
   const Literal* ret = suiteNode->eval();
   tm.popScope();
   return ret;

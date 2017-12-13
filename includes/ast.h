@@ -28,7 +28,7 @@ private:
 
 class FuncNode : public Node {
 public:
-  FuncNode(const std::string id, Node* stmts) : ident(id), suite(stmts) {  }
+  FuncNode(const std::string id, const Node* stmts) : ident(id), suite(stmts) {  }
   FuncNode(const FuncNode&) = delete;
   const FuncNode* operator=(const FuncNode&) = delete;
   virtual ~FuncNode(){ }
@@ -36,7 +36,7 @@ public:
   virtual const Literal* eval() const;
 private:
   std::string ident;
-  Node* suite;
+  const Node* suite;
 };
 
 class SuiteNode : public Node {

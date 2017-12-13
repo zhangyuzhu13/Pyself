@@ -10,7 +10,7 @@ TableManager& TableManager::getInstance(){
 
 const Literal* TableManager::getEntry(const std::string& name){
  std::vector<SymbolTable>::reverse_iterator rit = tables.rbegin();
-  for(; rit != tables.rend(); ++rit){
+  for(; rit != tables.rend(); rit++){
     if(rit->found(name))
       return rit->getEntry(name);
   }
@@ -19,7 +19,7 @@ const Literal* TableManager::getEntry(const std::string& name){
 }
 const Node* TableManager::getSuite(const std::string& name){
  std::vector<FunctionTable>::reverse_iterator rit = functions.rbegin();
-  for(; rit != functions.rend(); ++rit){
+  for(; rit != functions.rend(); rit++){
     if(rit->found(name))
       return rit->getSuite(name);
   }
