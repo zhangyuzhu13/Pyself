@@ -16,8 +16,8 @@ public:
   const Node* getSuite(const std::string& name);  //get from function table
   void insertSymb(const std::string& name, const Literal* node);
   void insertFunc(const std::string& name, const Node* node);
-  bool checkName(const std::string& name) const;
-  bool checkFunc(const std::string& name) const;
+  bool checkName(const std::string& name) ;
+  bool checkFunc(const std::string& name);
   void pushScope();
   void popScope();
   void display() const;

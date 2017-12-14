@@ -50,11 +50,11 @@
 %type<str> NAME
 %type<intNum> INTEGER augassign comp_op 
 %type<fltNum> FLOAT
-%type<node> number atom power factor term arith_expr testlist pick_yield_expr_testlist
-%type<node> star_EQUAL shift_expr and_expr xor_expr expr comparison not_test and_test or_test opt_IF_ELSE test star_COMMA_test expr_stmt parameters star_trailer trailer opt_arglist 
-%type<node> arglist argument pick_argument pick_yield_expr_testlist_comp opt_yield_test testlist_comp print_stmt opt_test
+%type<node> number atom power factor term arith_expr testlist pick_yield_expr_testlist fpdef
+%type<node> star_EQUAL shift_expr and_expr xor_expr expr comparison not_test and_test or_test opt_IF_ELSE test star_COMMA_test expr_stmt
+%type<node> argument pick_argument pick_yield_expr_testlist_comp opt_yield_test testlist_comp print_stmt opt_test
 %type<node> suite funcdef stmt simple_stmt small_stmt star_SEMI_small_stmt compound_stmt return_stmt flow_stmt if_stmt
-%type<vec> plus_stmt
+%type<vec> plus_stmt star_trailer trailer opt_arglist arglist star_argument_COMMA parameters varargslist star_fpdef_COMMA
 %start start
 
 %locations
@@ -108,21 +108,32 @@ decorated // Used in: compound_stmt
 funcdef // Used in: decorated, compound_stmt
 	: DEF NAME parameters COLON suite
 	{
-	  if($2 && $5){
-	  	$$ = new FuncNode($2, $5);
- 	  	pool.add($$);
-		delete[] $2;
-	  }
-	  else{ $$ = 0; delete[] $2;}
+	
+	 	if($2 && $5){
+	    	if($3){
+				dynamic_cast<SuiteNode*>($5)->setParameters(*$3);
+				delete $3;
+			}
+			$$ = new FuncNode($2, $5);
+ 	  		pool.add($$);
+			delete[] $2;
+	  	}
+	  	else{ $$ = 0; delete[] $2;}
 	}
 	;
 parameters // Used in: funcdef
-	: LPAR varargslist RPAR { $$ = 0; }
+	: LPAR varargslist RPAR { $$ = $2; }
 	| LPAR RPAR { $$ = 0; }
 	;
 varargslist // Used in: parameters, old_lambdef, lambdef
-	: star_fpdef_COMMA pick_STAR_DOUBLESTAR
-	| star_fpdef_COMMA fpdef opt_EQUAL_test opt_COMMA
+	: star_fpdef_COMMA pick_STAR_DOUBLESTAR  { $$ = $1; }
+	| star_fpdef_COMMA fpdef opt_EQUAL_test opt_COMMA 
+	{
+		$$ = $1;
+		if($2){
+			$$->push_back($2);
+		}
+	}
 	;
 opt_EQUAL_test // Used in: varargslist, star_fpdef_COMMA
 	: EQUAL test
@@ -130,7 +141,20 @@ opt_EQUAL_test // Used in: varargslist, star_fpdef_COMMA
 	;
 star_fpdef_COMMA // Used in: varargslist, star_fpdef_COMMA
 	: star_fpdef_COMMA fpdef opt_EQUAL_test COMMA
+	{
+		if($1 && $2){
+			$$ = $1;
+			$$->push_back($2);
+		}
+		else{
+			$$ = $1;
+		}
+	}
 	| %empty
+	{ 
+		$$ = new std::vector<Node*>();
+		$$->reserve(5);
+	}
 	;
 opt_DOUBLESTAR_NAME // Used in: pick_STAR_DOUBLESTAR
 	: COMMA DOUBLESTAR NAME {delete[] $3;}
@@ -145,8 +169,16 @@ opt_COMMA // Used in: varargslist, opt_test, opt_test_2, testlist_safe, listmake
 	| %empty
 	;
 fpdef // Used in: varargslist, star_fpdef_COMMA, fplist, star_fpdef_notest
-	: NAME {delete[] $1;}
+	: NAME 
+	{
+		$$ = new IdentNode($1);
+		pool.add($$);
+		delete[] $1;
+	}
 	| LPAR fplist RPAR
+	{
+		$$ = 0;
+	}
 	;
 fplist // Used in: fpdef
 	: fpdef star_fpdef_notest COMMA
@@ -777,8 +809,9 @@ power // Used in: factor
 	{
 		if($2 && $1){
   		    std::string tempName = dynamic_cast<IdentNode*>($1)->getIdent();
-		    $$ = new CallNode(tempName);
+		    $$ = new CallNode(tempName, *$2);
 		    pool.add($$);
+			delete $2;
 		}
 		else{
 		    $$ = $1;
@@ -788,8 +821,7 @@ power // Used in: factor
 star_trailer // Used in: power, star_trailer
 	: star_trailer trailer
 	{
-		$$ = new IntLiteral(0);
-		pool.add($$);
+		$$ = $2;
 	}
 	| %empty { $$ = 0; }
 	;
@@ -852,7 +884,15 @@ lambdef // Used in: test
 	| LAMBDA COLON test
 	;
 trailer // Used in: star_trailer
-	: LPAR opt_arglist RPAR { $$ = $2; }
+	: LPAR opt_arglist RPAR 
+	{ 
+		if($2){
+			$$ = $2;	
+		}
+		else{
+			$$ = new std::vector<Node*>();
+		}
+	}
 	| LSQB subscriptlist RSQB { $$ = 0; }
 	| DOT NAME { $$ = 0; delete[] $2; }
 	;
@@ -926,12 +966,29 @@ opt_testlist // Used in: classdef
 arglist // Used in: opt_arglist
 	: star_argument_COMMA pick_argument 
 	{
-		$$ = $2;
+		if($1 && $2){
+			$$ = $1;
+			$$->push_back($2);
+		}
 	}
 	;
 star_argument_COMMA // Used in: arglist, star_argument_COMMA
 	: star_argument_COMMA argument COMMA
+	{
+		if($2){
+			$$ = $1;
+			$$->push_back($2);
+		}
+		else{
+			$$ = $1;
+		}
+		delete $1;
+	}
 	| %empty
+	{
+		$$ = new std::vector<Node*>();
+		$$->reserve(5);
+	}
 	;
 star_COMMA_argument // Used in: star_COMMA_argument, pick_argument
 	: star_COMMA_argument COMMA argument
@@ -951,7 +1008,7 @@ pick_argument // Used in: arglist
 	;
 argument // Used in: star_argument_COMMA, star_COMMA_argument, pick_argument
 	: test opt_comp_for { $$ = $1; }
-	| test EQUAL test 
+	| test EQUAL test { $$ = 0; }
 	;
 opt_comp_for // Used in: argument
 	: comp_for
